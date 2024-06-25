@@ -1,0 +1,31 @@
+---
+- name: Deploy Spring PetClinic Application
+  hosts: app_servers
+  become: yes
+  vars:
+    artifact_type: "jar"
+    artifact_version: "2.5.0"
+    nexus_url: "http://127.0.0.1:8084/repository/maven-releases/org/springframework/my-artifact/spring-petclinic.jar"
+    local_artifact_path: "/tmp/spring-petclinic.jar"
+
+  tasks:
+    - name: Install required software for Java-based deployment
+      apt:
+        name: openjdk-11-jdk
+        state: present
+      when: artifact_type = "jar"
+
+    - name: Fetch artifact from Nexus
+      get_url:
+        url: "{{ nexus_url }}"
+        dest: "{{ local_artifact_path }}"
+      
+    - name: Copy local artifact to remote server
+      copy:
+        src: "{{ local_artifact_path }}"
+        dest: "/tmp/spring-petclinic.jar"
+
+    - name: Deploy java application
+      shell: java -jar /tmp/spring-petclinic.jar &
+      
+    
